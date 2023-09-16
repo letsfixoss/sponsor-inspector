@@ -3,6 +3,6 @@ tasks:
   default:
     cmds:
       - task --list
-  run:
+  getRepos:
     cmds:
-      - go run .
+      - go run ./cmd/getrepos

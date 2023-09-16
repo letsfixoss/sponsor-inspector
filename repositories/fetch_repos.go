@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"time"
+
+	"github.com/letsfixoss/gh-sponsor-grabber/internal"
 )
 
 const perPage = 100
@@ -25,7 +26,8 @@ type SearchResult struct {
 
 func GetRepos() []Repository {
 	client := &http.Client{Timeout: timeout}
-	token := os.Getenv("GITHUB_TOKEN")
+	env := internal.GetEnv()
+	token := env.GithubToken
 	foundRepos := make([]Repository, 0)
 
 	// Loop over pages
