@@ -5,10 +5,9 @@ import (
 	"os"
 
 	"database/sql"
-	"net/url"
 
-	"github.com/amacneil/dbmate/v2/pkg/dbmate"
 	_ "github.com/libsql/libsql-client-go/libsql"
+	"github.com/rubenv/sql-migrate"
 	_ "modernc.org/sqlite"
 )
 
@@ -39,12 +38,12 @@ func GetConnection() *Connection {
 }
 
 func (c *Connection) migrate() {
-	file := getPath()
-	u, _ := url.Parse(file)
-	db := dbmate.New(u)
-
-	if err := db.CreateAndMigrate(); err != nil {
-		fmt.Fprintf(os.Stderr, "failed to migrate db %s: %s", file, err)
-		os.Exit(1)
+	migrations := &migrate.FileMigrationSource{
+    Dir: "db/migrations",
+}
+	n, err := migrate.Exec(c.db, "sqlite3", migrations, migrate.Up)
+	if err != nil {
+		panic(fmt.Errorf("failed to apply migrations: %s", err))
 	}
+	fmt.Printf("Applied %d migrations!\n", n)
 }

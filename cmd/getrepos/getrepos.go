@@ -19,6 +19,8 @@ func main() {
 	for _, repo := range repos {
 		log.Printf("Repo: %s", repo.FullName)
 		dbRepo := db.Repository{Name: repo.FullName}
-		conn.UpsertRepository(ctx, &dbRepo)
+		if err := conn.UpsertRepository(ctx, &dbRepo); err != nil {
+			log.Printf("Failed to upsert repository %s: %s", repo.FullName, err)
+		}
 	}
 }

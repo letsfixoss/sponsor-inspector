@@ -8,6 +8,7 @@ import (
 type Repository struct {
 	ID   uint64
 	Name string
+	URL string
 }
 
 // UpsertRepository inserts or updates a repository
