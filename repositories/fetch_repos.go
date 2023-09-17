@@ -17,6 +17,10 @@ const timeout = 30 * time.Second
 // Repository structure returned by GitHub API
 type Repository struct {
 	FullName string `json:"full_name"`
+	Owner    struct {
+		Login     string `json:"login"`
+		AvatarURL string `json:"avatar_url"`
+	} `json:"owner"`
 }
 
 // SearchResult to hold the array of repositories
@@ -63,10 +67,6 @@ func GetRepos() []Repository {
 
 		// Loop over each repository
 		for _, repo := range result.Items {
-			// Download the dependency files here
-			// For example: Fetch package.json or go.mod from the repo
-			fmt.Println("Fetching files for repo:", repo.FullName)
-			// Implement code to fetch package.json, go.mod, etc.
 			foundRepos = append(foundRepos, repo)
 		}
 
