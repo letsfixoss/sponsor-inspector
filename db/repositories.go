@@ -3,32 +3,54 @@ package db
 import (
 	"context"
 	"fmt"
+	"time"
 )
 
-type RepoOwners struct {
+type RepoOwner struct {
 	ID           uint64
 	Name         string
 	SponsorCount *uint
+	GithubID     uint64
+	AvatarURL    string
+	URL          string
 }
 
 type Repository struct {
-	ID        uint64
-	Name      string
-	Owner     uint64
-	AvatarURL string
+	ID         uint64
+	Name       string
+	Owner      uint64
+	AvatarURL  string
+	Stars      int
+	Forks      int
+	Watchers   int
+	Language   string
+	CreatedAt  time.Time
+	URL        string
+	OpenIssues int
+	Archived   bool
+	Disabled   bool
+	GithubID   uint64
 }
 
 // UpsertRepository inserts or updates a repository
 func (c *Connection) UpsertRepository(ctx context.Context, r *Repository) error {
 	const query = `
-		INSERT INTO repositories (name, owner_id, avatar_url) 
-			VALUES (?, ?, ?) ON CONFLICT(name) 
+		INSERT INTO repositories (
+			name, owner_id, avatar_url, stars, forks, watchers, language, created_at, url, 
+			open_issues, archived, disabled, github_id
+		) 
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			ON CONFLICT(name)
 			DO UPDATE SET name = name 
 			RETURNING id`
 
 	var id uint64
 
-	if err := c.db.QueryRow(query, r.Name, r.Owner, r.AvatarURL).Scan(&id); err != nil {
+	err := c.db.QueryRow(
+		query, r.Name, r.Owner, r.AvatarURL, r.Stars, r.Forks, r.Watchers, r.Language, r.CreatedAt,
+		r.URL, r.OpenIssues, r.Archived, r.Disabled, r.GithubID,
+	).Scan(&id)
+	if err != nil {
 		return fmt.Errorf("failed to upsert repository %s: %s", r.Name, err)
 	}
 
@@ -37,14 +59,18 @@ func (c *Connection) UpsertRepository(ctx context.Context, r *Repository) error 
 	return nil
 }
 
-func (c *Connection) GetOrCreateOwner(ctx context.Context, name string) (uint64, error) {
-	const query = `INSERT INTO repo_owners (name) VALUES (?) ON CONFLICT(name) DO UPDATE SET name = name RETURNING id`
+func (c *Connection) GetOrCreateOwner(ctx context.Context, ro *RepoOwner) (uint64, error) {
+	const query = `INSERT INTO repo_owners (name, github_id, avatar_url, url) VALUES (?, ?, ?, ?)
+		ON CONFLICT(name) DO UPDATE SET name = name 
+		RETURNING id`
 
 	var id uint64
 
-	if err := c.db.QueryRow(query, name).Scan(&id); err != nil {
-		return 0, fmt.Errorf("failed to get or create owner %s: %s", name, err)
+	if err := c.db.QueryRow(query, ro.Name, ro.GithubID, ro.AvatarURL, ro.URL).Scan(&id); err != nil {
+		return 0, fmt.Errorf("failed to get or create owner %s: %s", ro.Name, err)
 	}
+
+	ro.ID = id
 
 	return id, nil
 }
@@ -75,7 +101,7 @@ func (c *Connection) GetRepositories(ctx context.Context) ([]*Repository, error)
 }
 
 // GetRepoOwners returns all repo owners
-func (c *Connection) GetRepoOwners(ctx context.Context) ([]*RepoOwners, error) {
+func (c *Connection) GetRepoOwners(ctx context.Context) ([]*RepoOwner, error) {
 	const query = `SELECT id, name, sponsor_count FROM repo_owners`
 
 	rows, err := c.db.Query(query)
@@ -85,10 +111,10 @@ func (c *Connection) GetRepoOwners(ctx context.Context) ([]*RepoOwners, error) {
 
 	defer rows.Close()
 
-	var owners []*RepoOwners
+	var owners []*RepoOwner
 
 	for rows.Next() {
-		var o RepoOwners
+		var o RepoOwner
 
 		if err := rows.Scan(&o.ID, &o.Name, &o.SponsorCount); err != nil {
 			return nil, fmt.Errorf("failed to scan repo owner: %s", err)

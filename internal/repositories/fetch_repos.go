@@ -16,11 +16,34 @@ const timeout = 30 * time.Second
 
 // Repository structure returned by GitHub API
 type Repository struct {
-	FullName string `json:"full_name"`
-	Owner    struct {
+	FullName        string `json:"full_name"`
+	StargazersCount int    `json:"stargazers_count"`
+	AvatarURL       string `json:"avatar_url"`
+	ForksCount      int    `json:"forks_count"`
+	WatchersCount   int    `json:"watchers_count"`
+	Language        string `json:"language"`
+	CreatedAt       string `json:"created_at"`
+	ID              uint64  `json:"id"`
+	URL             string `json:"url"`
+	OpenIssuesCount int    `json:"open_issues_count"`
+	Archived        bool   `json:"archived"`
+	Disabled        bool   `json:"disabled"`
+	Owner           struct {
 		Login     string `json:"login"`
 		AvatarURL string `json:"avatar_url"`
+		ID        uint64 `json:"id"`
+		URL       string `json:"url"`
 	} `json:"owner"`
+}
+
+func (r Repository) CreatedAsTime() time.Time {
+	t, err := time.Parse(time.RFC3339, r.CreatedAt)
+	if err != nil {
+		fmt.Println("Error parsing time:", err)
+		return time.Now() // well this could be bad...
+	}
+
+	return t
 }
 
 // SearchResult to hold the array of repositories
@@ -28,6 +51,8 @@ type SearchResult struct {
 	Items []Repository `json:"items"`
 }
 
+// GetRepos returns a list of repositories
+// @see https://docs.github.com/en/free-pro-team@latest/rest/search/search?apiVersion=2022-11-28#search-repositories
 func GetRepos() []Repository {
 	client := &http.Client{Timeout: timeout}
 	env := internal.GetEnv()

@@ -46,7 +46,7 @@ func main() {
 	}
 }
 
-func scrapeSponsors(ro *db.RepoOwners) (*uint, error) {
+func scrapeSponsors(ro *db.RepoOwner) (*uint, error) {
 	var count *uint
 	var retErr error
 	url := fmt.Sprintf("https://github.com/sponsors/%s", ro.Name)
