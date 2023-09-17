@@ -6,8 +6,9 @@ import (
 )
 
 type RepoOwners struct {
-	ID   uint64
-	Name string
+	ID           uint64
+	Name         string
+	SponsorCount *uint
 }
 
 type Repository struct {
@@ -46,4 +47,65 @@ func (c *Connection) GetOrCreateOwner(ctx context.Context, name string) (uint64,
 	}
 
 	return id, nil
+}
+
+func (c *Connection) GetRepositories(ctx context.Context) ([]*Repository, error) {
+	const query = `SELECT id, name, owner_id, avatar_url FROM repositories`
+
+	rows, err := c.db.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get repositories: %s", err)
+	}
+
+	defer rows.Close()
+
+	var repos []*Repository
+
+	for rows.Next() {
+		var r Repository
+
+		if err := rows.Scan(&r.ID, &r.Name, &r.Owner, &r.AvatarURL); err != nil {
+			return nil, fmt.Errorf("failed to scan repository: %s", err)
+		}
+
+		repos = append(repos, &r)
+	}
+
+	return repos, nil
+}
+
+// GetRepoOwners returns all repo owners
+func (c *Connection) GetRepoOwners(ctx context.Context) ([]*RepoOwners, error) {
+	const query = `SELECT id, name, sponsor_count FROM repo_owners`
+
+	rows, err := c.db.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get repo owners: %s", err)
+	}
+
+	defer rows.Close()
+
+	var owners []*RepoOwners
+
+	for rows.Next() {
+		var o RepoOwners
+
+		if err := rows.Scan(&o.ID, &o.Name, &o.SponsorCount); err != nil {
+			return nil, fmt.Errorf("failed to scan repo owner: %s", err)
+		}
+
+		owners = append(owners, &o)
+	}
+
+	return owners, nil
+}
+
+func (c *Connection) UpdateSponsorCount(ctx context.Context, id uint64, count *uint) error {
+	const query = `UPDATE repo_owners SET sponsor_count = ? WHERE id = ?`
+
+	if _, err := c.db.Exec(query, count, id); err != nil {
+		return fmt.Errorf("failed to update sponsor count for repo owner %d: %s", id, err)
+	}
+
+	return nil
 }

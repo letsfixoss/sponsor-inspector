@@ -23,8 +23,8 @@ func main() {
 			AvatarURL: repo.Owner.AvatarURL,
 		}
 
-		ownerID, err := conn.GetOrCreateOwner(ctx, repo.Owner.Login);
-		if  err != nil {
+		ownerID, err := conn.GetOrCreateOwner(ctx, repo.Owner.Login)
+		if err != nil {
 			log.Printf("Failed to get or create owner %s: %s", repo.Owner.Login, err)
 		}
 

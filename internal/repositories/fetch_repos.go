@@ -36,7 +36,7 @@ func GetRepos() []Repository {
 
 	// Loop over pages
 	for page := 1; page <= maxPages; page++ {
-		url := fmt.Sprintf("https://api.github.com/search/repositories?q=language:go&sort=stars&order=desc&per_page=%d&page=%d", perPage, page)
+		url := fmt.Sprintf("https://api.github.com/search/repositories?q=stars:>10000&sort=stars&order=desc&per_page=%d&page=%d", perPage, page)
 		req, err := http.NewRequest("GET", url, nil)
 		if err != nil {
 			fmt.Println("Error creating HTTP request:", err)
