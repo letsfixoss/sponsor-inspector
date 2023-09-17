@@ -7,7 +7,7 @@ import (
 	"database/sql"
 
 	_ "github.com/libsql/libsql-client-go/libsql"
-	"github.com/rubenv/sql-migrate"
+	migrate "github.com/rubenv/sql-migrate"
 	_ "modernc.org/sqlite"
 )
 
@@ -39,8 +39,8 @@ func GetConnection() *Connection {
 
 func (c *Connection) migrate() {
 	migrations := &migrate.FileMigrationSource{
-    Dir: "db/migrations",
-}
+		Dir: "db/migrations",
+	}
 	n, err := migrate.Exec(c.db, "sqlite3", migrations, migrate.Up)
 	if err != nil {
 		panic(fmt.Errorf("failed to apply migrations: %s", err))

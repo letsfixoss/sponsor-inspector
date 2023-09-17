@@ -5,7 +5,7 @@ import (
 	"log"
 
 	"github.com/letsfixoss/gh-sponsor-grabber/db"
-	"github.com/letsfixoss/gh-sponsor-grabber/repositories"
+	"github.com/letsfixoss/gh-sponsor-grabber/internal/repositories"
 )
 
 func main() {
@@ -20,9 +20,16 @@ func main() {
 		log.Printf("Repo: %s", repo.FullName)
 		dbRepo := db.Repository{
 			Name:      repo.FullName,
-			Owner:     repo.Owner.Login,
 			AvatarURL: repo.Owner.AvatarURL,
 		}
+
+		ownerID, err := conn.GetOrCreateOwner(ctx, repo.Owner.Login);
+		if  err != nil {
+			log.Printf("Failed to get or create owner %s: %s", repo.Owner.Login, err)
+		}
+
+		dbRepo.Owner = ownerID
+
 		if err := conn.UpsertRepository(ctx, &dbRepo); err != nil {
 			log.Printf("Failed to upsert repository %s: %s", repo.FullName, err)
 		}
